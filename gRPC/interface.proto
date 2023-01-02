@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package auction;
+option go_package = "https://github.com/frederikgantriis/AuctionSystem-DISYS;auction";
+
+service Auction {
+    rpc bid (BidRequest) returns (ClientReply) {}
+    rpc result (Request) returns (ClientReply) {}
+    rpc reset (Request) returns (ClientReply) {}
+
+    rpc serverBid (BidRequest) returns (OutcomeReply) {}
+    rpc serverResult (Request) returns (ResultReply) {}
+    rpc ServerReset (Request) returns (OutcomeReply) {}
+}
+
+message Request {
+}
+
+message BidRequest {
+    string user = 1;
+    int32 bid = 2;
+}
+
+message ClientReply {
+    string message = 1;
+}
+
+message OutcomeReply {
+    outcomes outcome = 1;
+}
+
+message ResultReply {
+    int32 highestBid = 1;
+    string user = 2;
+    int32 timeLeft = 3;
+}
+
+enum outcomes {
+    FAIL = 0;
+    SUCCESS = 1;
+}
