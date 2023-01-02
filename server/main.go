@@ -9,19 +9,20 @@ import (
 	"strconv"
 	"time"
 
-	auction "github.com/frederikgantriis/AuctionSystem-DISYS/gRPC"
+	auction "github.com/frederikgantriis/DISYS-EXAM2021/gRPC"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	file, _ := openLogFile("./server/serverlog.log")
+	file, _ := openLogFile("./logs/serverlog.log")
 
 	mw := io.MultiWriter(os.Stdout, file)
 	log.SetOutput(mw)
 	log.SetFlags(2 | 3)
 
 	if len(os.Args) != 2 {
-		log.Printf("Please input a number to run the server on")
+		log.Printf("Please input a number to run the server on. Fx. inputting 3 would run the server on port 3003")
+		return
 	}
 
 	ownId := os.Args[1]
@@ -43,7 +44,7 @@ func main() {
 	grpcServer.Serve(listen)
 }
 
-func (s *Server) Bid(ctx context.Context, req *auction.BidRequest) (*auction.BidReply, error) {
+func (s *Server) ServerBid(ctx context.Context, req *auction.BidRequest) (*auction.OutcomeReply, error) {
 	// if a bid is made when timeLeft is -1, a new auction starts
 	log.Printf("server %v: recieved a bid from %v. Amount: %v", s.id, req.GetUser(), req.GetBid())
 	if s.timeLeft == -1 {
@@ -68,21 +69,26 @@ func (s *Server) Bid(ctx context.Context, req *auction.BidRequest) (*auction.Bid
 	if (req.Bid > s.highestBid) && (s.timeLeft > 0) {
 		s.highestBid = req.Bid
 		s.currentWinnerUser = req.User
-		return &auction.BidReply{Outcome: auction.Outcomes(SUCCESS)}, nil
+		return &auction.OutcomeReply{Outcome: auction.Outcomes(SUCCESS)}, nil
 	} else {
-		return &auction.BidReply{Outcome: auction.Outcomes(FAIL)}, nil
+		return &auction.OutcomeReply{Outcome: auction.Outcomes(FAIL)}, nil
 	}
 }
 
-func (s *Server) Result(ctx context.Context, resReq *auction.ResultRequest) (*auction.ResultReply, error) {
+func (s *Server) ServerResult(ctx context.Context, resReq *auction.Request) (*auction.ResultReply, error) {
 	return &auction.ResultReply{User: s.currentWinnerUser, HighestBid: s.highestBid, TimeLeft: s.timeLeft}, nil
 }
 
-func (s *Server) Reset(ctx context.Context, resReq *auction.ResetRequest) (*auction.ResetReply, error) {
+func (s *Server) ServerReset(ctx context.Context, resReq *auction.Request) (*auction.OutcomeReply, error) {
+	// Don't reset if auction isn't over
+	if s.timeLeft > 0 {
+		return &auction.OutcomeReply{Outcome: auction.Outcomes_FAIL}, nil
+	}
+
 	// timeLeft == -1 means that a new auction will be started when a bid is made
 	s.timeLeft = -1
 	log.Printf("server %v: resetted the auction", s.id)
-	return &auction.ResetReply{}, nil
+	return &auction.OutcomeReply{}, nil
 }
 
 func openLogFile(path string) (*os.File, error) {

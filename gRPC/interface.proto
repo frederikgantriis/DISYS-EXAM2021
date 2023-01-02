@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package auction;
-option go_package = "https://github.com/frederikgantriis/AuctionSystem-DISYS;auction";
+option go_package = "https://github.com/frederikgantriis/DISYS-EXAM2021;auction";
 
 service Auction {
     rpc bid (BidRequest) returns (ClientReply) {}
